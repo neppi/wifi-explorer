@@ -5,5 +5,13 @@
   "main": "index.js",
   "author": "neptuntriton <jens.haupt.eu@gmail.com>",
   "license": "MIT",
-  "private": true
+  "private": true,
+  "scripts": {
+    "up": "sudo ip link set wlxc83a35ca40e1 up",
+    "down": "sudo ip link set wlxc83a35ca40e1 down",
+    "info": "iwconfig wlxc83a35ca40e1",
+    "managed" : "yarn down && sudo iw dev wlxc83a35ca40e1 set type managed && yarn up", 
+    "monitor" : "yarn down && sudo iw dev wlxc83a35ca40e1 set type monitor && yarn up",
+    "sniff" : "sudo airodump-ng wlxc83a35ca40e1"
+  }
 }
