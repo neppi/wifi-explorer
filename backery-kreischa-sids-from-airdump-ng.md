@@ -24,8 +24,8 @@ sudo airodump-ng --bssid <your_BSSID> -c <channel> -w capture wlxc83a35ca40e1
 
 ### SIDs captured from airodump-ng at Backery Kreischa
 
-| BSSID | PWR | Beacons | #Data, #/s | CH | MB | ENC | CIPHER | AUTH | ESSID |
-|-------|-----|---------|------------|----|----|-----|--------|------|-------|
+| BSSID | PWR | Beacons | Data | #/s  | CH | MB | ENC | CIPHER | AUTH | ESSID |
+|-------|-----|---------|------|------|----|----|-----|--------|------|-------|
 | 00:00:00:00:00:00 | -1 | 0 | 14 | 0 | 6 | -1 | OPN | | <length: 0> |
 | 0E:B8:F4:FF:3B:A7 | -14 | 144 | 9 | 0 | 11 | 130 | WPA2 | CCMP | PSK | Neppis Hotspot |
 | F2:9E:28:70:63:13 | -46 | 166 | 0 | 0 | 1 | 360 | WPA2 | CCMP | MGT | Store-IT-218 |

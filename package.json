@@ -12,6 +12,7 @@
     "info": "iwconfig wlxc83a35ca40e1",
     "managed" : "yarn down && sudo iw dev wlxc83a35ca40e1 set type managed && yarn up", 
     "monitor" : "yarn down && sudo iw dev wlxc83a35ca40e1 set type monitor && yarn up",
-    "sniff" : "sudo airodump-ng wlxc83a35ca40e1"
+    "sniff" : "sudo airodump-ng wlxc83a35ca40e1",
+    "capture": "sudo airodump-ng --bssid 0E:B8:F4:FF:3B:A7 -c 11 -w capture wlxc83a35ca40e1"
   }
 }
