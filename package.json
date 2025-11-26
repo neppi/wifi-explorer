@@ -1,0 +1,9 @@
+{
+  "name": "wifi-explorer",
+  "version": "1.0.0",
+  "description": "collect some knowledge",
+  "main": "index.js",
+  "author": "neptuntriton <jens.haupt.eu@gmail.com>",
+  "license": "MIT",
+  "private": true
+}
