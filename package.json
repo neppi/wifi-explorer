@@ -12,6 +12,7 @@
     "scan:quick": "yarn build && node dist/automate.js scan 30",
     "scan:long": "yarn build && node dist/automate.js scan 300",
     "stats": "yarn build && node dist/automate.js stats",
+    "capture-handshake": "yarn build && node dist/automate.js capture",
     "up": "sudo ip link set ${WIFI_INTERFACE:-wlxc83a35ca40e1} up",
     "down": "sudo ip link set ${WIFI_INTERFACE:-wlxc83a35ca40e1} down",
     "info": "iwconfig ${WIFI_INTERFACE:-wlxc83a35ca40e1}",

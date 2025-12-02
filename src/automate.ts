@@ -3,6 +3,8 @@ import { spawn, ChildProcess } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { DatabaseManager, NetworkInfo, ClientInfo, ScanResult } from './database';
+import { captureHandshakeInteractive } from './capture-handshake';
+import { setMonitorMode, setManagedMode } from './utils';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -20,82 +22,6 @@ class WiFiScanner {
     }
     this.capturesDir = path.join(__dirname, '..', 'captures');
     this.dbManager = new DatabaseManager();
-  }
-
-  /**
-   * Set interface to monitor mode
-   */
-  private async setMonitorMode(): Promise<void> {
-    console.log(`🔧 Setting ${this.wifiInterface} to monitor mode...`);
-    
-    return new Promise((resolve, reject) => {
-      const down = spawn('sudo', ['ip', 'link', 'set', this.wifiInterface, 'down']);
-      
-      down.on('close', (code) => {
-        if (code !== 0) {
-          reject(new Error(`Failed to bring interface down`));
-          return;
-        }
-        
-        const monitor = spawn('sudo', ['iw', 'dev', this.wifiInterface, 'set', 'type', 'monitor']);
-        
-        monitor.on('close', (code) => {
-          if (code !== 0) {
-            reject(new Error(`Failed to set monitor mode`));
-            return;
-          }
-          
-          const up = spawn('sudo', ['ip', 'link', 'set', this.wifiInterface, 'up']);
-          
-          up.on('close', (code) => {
-            if (code === 0) {
-              console.log('✅ Monitor mode enabled');
-              resolve();
-            } else {
-              reject(new Error(`Failed to bring interface up`));
-            }
-          });
-        });
-      });
-    });
-  }
-
-  /**
-   * Set interface back to managed mode
-   */
-  private async setManagedMode(): Promise<void> {
-    console.log(`🔧 Setting ${this.wifiInterface} back to managed mode...`);
-    
-    return new Promise((resolve, reject) => {
-      const down = spawn('sudo', ['ip', 'link', 'set', this.wifiInterface, 'down']);
-      
-      down.on('close', (code) => {
-        if (code !== 0) {
-          reject(new Error(`Failed to bring interface down`));
-          return;
-        }
-        
-        const managed = spawn('sudo', ['iw', 'dev', this.wifiInterface, 'set', 'type', 'managed']);
-        
-        managed.on('close', (code) => {
-          if (code !== 0) {
-            reject(new Error(`Failed to set managed mode`));
-            return;
-          }
-          
-          const up = spawn('sudo', ['ip', 'link', 'set', this.wifiInterface, 'up']);
-          
-          up.on('close', (code) => {
-            if (code === 0) {
-              console.log('✅ Managed mode enabled');
-              resolve();
-            } else {
-              reject(new Error(`Failed to bring interface up`));
-            }
-          });
-        });
-      });
-    });
   }
 
   /**
@@ -181,7 +107,7 @@ class WiFiScanner {
     
     try {
       // Set monitor mode
-      await this.setMonitorMode();
+      await setMonitorMode(this.wifiInterface);
       
       // Run scan
       const csvPath = await this.runScan(durationSeconds);
@@ -213,7 +139,7 @@ class WiFiScanner {
     } finally {
       // Always try to restore managed mode
       try {
-        await this.setManagedMode();
+        await setManagedMode(this.wifiInterface);
       } catch (error) {
         console.error('⚠️  Failed to restore managed mode:', error);
       }
@@ -279,19 +205,22 @@ async function main() {
   const command = args[0] || 'scan';
   const duration = parseInt(args[1]) || 60;
 
-  const scanner = new WiFiScanner();
-
   try {
     if (command === 'scan') {
+      const scanner = new WiFiScanner();
       await scanner.scan(duration);
     } else if (command === 'stats') {
+      const scanner = new WiFiScanner();
       await scanner.getStats();
+    } else if (command === 'capture') {
+      await captureHandshakeInteractive();
     } else {
       console.log('Usage:');
-      console.log('  yarn scan [duration]  - Scan for WiFi networks (default: 60 seconds)');
-      console.log('  yarn stats            - Show database statistics');
+      console.log('  npm run scan [duration]  - Scan for WiFi networks (default: 60 seconds)');
+      console.log('  npm run stats            - Show database statistics');
+      console.log('  npm run capture          - Capture WPA handshake from a network');
       console.log('\nMake sure to set WIFI_INTERFACE environment variable!');
-      console.log('Example: WIFI_INTERFACE=wlxc83a35ca40e1 yarn scan 120');
+      console.log('Example: WIFI_INTERFACE=wlxc83a35ca40e1 npm run scan 120');
     }
   } catch (error) {
     console.error('Error:', error);
