@@ -1,0 +1,7 @@
+captures/
+password-lists/
+node_modules/
+dist/
+*.log
+wifi-scan-db.json
+.env
